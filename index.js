@@ -49,23 +49,44 @@ app.get('/home/:varr', (req, res) => {
   //res.send(req.params);
 });
 
+app.get('/webhook', function (req, res) {
+  console.log('req.body', req.body);
+  res.json({
+    speech:
+      'today, in bonn the weather is : broken clouds with temperatures between 11.0 and 14.4 Celsius degrees',
+    displayText:
+      'today, in bonn the weather is : broken clouds with temperatures between 11.0 and 14.4 Celsius degrees',
+    data: null,
+  });
+});
+
 app.post('/webhook', function (req, res) {
+  console.log('req.body.result', req.body.result);
+  let city = 'hannover';
+  let day = 'today';
+  let url = '';
   let action = req.body.result.action;
   switch (action) {
     case 'query_openweathermap':
-      let city = req.body.result.parameters['City'];
-      let url =
-        BASEURL + 'weather/?q=' + city + '&lang=en&APPID=' + WEATHERTOKEN;
-      axios
-        .get(url)
-        .then(function (response) {
-          out = buildDayWeatherResponse(response.data, 'today', city);
-          res.json(out);
-        })
-        .catch(function (error) {
-          res.json(buildReponse('error'));
-        });
+      city = req.body.result.parameters['City'];
+      url = BASEURL + 'weather/?q=' + city + '&lang=en&APPID=' + WEATHERTOKEN;
       break;
+    default:
+      url = BASEURL + 'weather/?q=' + city + '&lang=en&APPID=' + WEATHERTOKEN;
+      break;
+  }
+  if (url) {
+    axios
+      .get(url)
+      .then(function (response) {
+        out = buildDayWeatherResponse(response.data, day, city);
+        res.json(out);
+      })
+      .catch(function (error) {
+        res.json(buildReponse('error'));
+      });
+  } else {
+    res.json(buildReponse('not applicable'));
   }
 });
 
