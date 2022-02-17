@@ -54,6 +54,14 @@ app.post('/webhook', function (req, res) {
   let city = 'hannover';
   let day = 'today';
   let url = '';
+  if (req.body.queryResult) {
+    console.log(
+      'intent',
+      req.body.queryResult.intent,
+      'parameters',
+      req.body.queryResult.parameters
+    );
+  }
   if (req.body.queryResult && req.body.queryResult.allRequiredParamsPresent) {
     let q = req.body.queryResult;
     let intent = q.intent.displayName;
