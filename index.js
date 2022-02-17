@@ -15,6 +15,8 @@ app
   .get('/', (req, res) => res.render('pages/index'))
   .listen(PORT, () => console.log(`Listening on ${PORT}`));
 
+app.use(express.json());
+
 app.get('/home', (req, res, next) => {
   res.send('<h1>Welcome. :)</h1>');
 });
@@ -37,61 +39,64 @@ app.get('/home/:varr', (req, res) => {
     })
     .catch(function (error) {
       console.log('error', error);
+      res.status(400).json({ error: error.message });
     });
-
-  // request.get(url, function (error, response, body) {
-  //   var json = JSON.parse(body);
-  //   out = buildDayWeatherResponse(json, 'today', city);
-  //   console.log(body, out);
-  //   res.json(out);
-  // });
 
   //res.send(req.params);
 });
 
 app.get('/webhook', function (req, res) {
-  console.log('req.body', req.body);
-  res.json({
-    speech:
-      'today, in bonn the weather is : broken clouds with temperatures between 11.0 and 14.4 Celsius degrees',
-    displayText:
-      'today, in bonn the weather is : broken clouds with temperatures between 11.0 and 14.4 Celsius degrees',
-    data: null,
-  });
+  res.json(buildReponse('get webhook'));
 });
 
 app.post('/webhook', function (req, res) {
-  console.log('req.body.result', req.body.result);
+  // console.log('req.body', req.body);
   let city = 'hannover';
   let day = 'today';
   let url = '';
-  let action = req.body.result.action;
-  switch (action) {
-    case 'query_openweathermap':
-      city = req.body.result.parameters['City'];
-      url = BASEURL + 'weather/?q=' + city + '&lang=en&APPID=' + WEATHERTOKEN;
-      break;
-    default:
-      url = BASEURL + 'weather/?q=' + city + '&lang=en&APPID=' + WEATHERTOKEN;
-      break;
-  }
-  if (url) {
-    axios
-      .get(url)
-      .then(function (response) {
-        out = buildDayWeatherResponse(response.data, day, city);
-        res.json(out);
-      })
-      .catch(function (error) {
-        res.json(buildReponse('error'));
-      });
+  if (req.body.queryResult && req.body.queryResult.allRequiredParamsPresent) {
+    let q = req.body.queryResult;
+    let intent = q.intent.displayName;
+    switch (intent) {
+      case 'query weather':
+        city = q.parameters['geo-city'];
+        url = BASEURL + 'weather/?q=' + city + '&lang=en&APPID=' + WEATHERTOKEN;
+        break;
+      default:
+        url = BASEURL + 'weather/?q=' + city + '&lang=en&APPID=' + WEATHERTOKEN;
+        break;
+    }
+
+    if (url) {
+      axios
+        .get(url)
+        .then(function (response) {
+          out = buildDayWeatherResponse(response.data, day, city);
+          res.json(out);
+        })
+        .catch(function (error) {
+          res.json(buildReponse('error'));
+        });
+    } else {
+      res.json(buildReponse('somethin else'));
+    }
   } else {
-    res.json(buildReponse('not applicable'));
+    res.json(buildReponse('not enogh info'));
   }
 });
 
 function buildReponse(speech) {
-  let out = { speech: speech, displayText: speech, data: null };
+  //let out = { speech: speech, displayText: speech, data: null };
+  let out = {
+    fulfillmentMessages: [
+      {
+        text: {
+          text: [speech],
+        },
+      },
+    ],
+  };
+
   return out;
 }
 
