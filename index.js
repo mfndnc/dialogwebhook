@@ -48,6 +48,36 @@ app.get('/home/:varr', (req, res) => {
 app.get('/webhook', function (req, res) {
   res.json(buildReponse('get webhook'));
 });
+app.get('/hajtesthook', function (req, res) {
+  res.json(buildReponse('it is not supposed to be viewed like this'));
+});
+
+app.post('/hajtesthook', function (req, res) {
+  if (req.body.queryResult) {
+    console.log(
+      'intent',
+      req.body.queryResult.intent,
+      'parameters',
+      req.body.queryResult.parameters
+    );
+    let q = req.body.queryResult;
+    let intent = q.intent.displayName;
+    let intenttext = intent + ' ' + q.allRequiredParamsPresent;
+
+    let obj = q.parameters;
+    let paramtext = Object.keys(obj)
+      .map(function (k) {
+        return k + ': ' + obj[k];
+      })
+      .join(',');
+
+    let show =
+      'received parameters ' + paramtext + ' from intent : ' + intenttext;
+    res.json(buildReponse(show));
+  } else {
+    res.json(buildReponse('no queryResult received'));
+  }
+});
 
 app.post('/webhook', function (req, res) {
   // console.log('req.body', req.body);
