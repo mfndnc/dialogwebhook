@@ -126,6 +126,7 @@ app.post('/webhook', function (req, res) {
 function buildReponse(speech) {
   //let out = { speech: speech, displayText: speech, data: null };
   let out = {
+    fulfillmentText: speech,
     fulfillmentMessages: [
       {
         text: {
